@@ -1,0 +1,51 @@
+from fastapi import FastAPI
+from fastapi import HTTPException
+from database import database as connection
+from database import User, Movie, UserReview
+from schemas import UserRequestModel, UserResponseModel, ReviewRequestModel, ReviewResponseModel
+
+app = FastAPI(title="Proyecto para reseñar películas",
+ version="1.0.0",
+ description="API para reseñar películas")
+
+@app.on_event('startup')
+def startup():
+    if connection.is_closed():
+        connection.connect()
+    
+    connection.create_tables([User, Movie, UserReview])
+
+@app.on_event('shutdown')
+def shutdown():
+    if not connection.is_closed():
+        connection.close()
+        
+
+@app.get('/')
+async def index():
+    return '¡Bienvenido a la API de reseñas de películas!'
+
+@app.post('/users', response_model=UserResponseModel)
+async def create_user(user: UserRequestModel):
+
+    if User.select().where(User.username == user.username).exists():
+        raise HTTPException(status_code=409, detail="El nombre de usuario ya existe")
+
+    hash_password = User.create_password(user.password)
+    user = User.create(
+        username=user.username,
+        password=hash_password
+    )
+
+    return user
+
+@app.post('/reviews', response_model=ReviewResponseModel)
+async def create_reviews(user_review: ReviewRequestModel):
+    user_review = UserReview.create(
+        user=user_review.user_id,
+        movie=user_review.movie_id,
+        reviews=user_review.reviews,
+        score=user_review.score
+    )
+
+    return user_review
