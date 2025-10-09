@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from database import database as connection
 from database import User, Movie, UserReview
 from schemas import UserRequestModel, UserResponseModel, ReviewRequestModel, ReviewResponseModel
+from typing import List
 
 app = FastAPI(title="Proyecto para reseñar películas",
  version="1.0.0",
@@ -55,3 +56,8 @@ async def create_reviews(user_review: ReviewRequestModel):
     )
 
     return user_review
+
+@app.get('/reviews/', response_model=List[ReviewResponseModel])
+async def get_review():
+    reviews = UserReview.select() #SELECT * FROM user_reviews;
+    return [user_review for user_review in reviews]
