@@ -41,6 +41,12 @@ async def create_user(user: UserRequestModel):
 
 @app.post('/reviews', response_model=ReviewResponseModel)
 async def create_reviews(user_review: ReviewRequestModel):
+    if User.select().where(User.id == user_review.user_id).first() is None:
+        raise HTTPException(status_code=404, detail="El usuario no existe")
+
+    if Movie.select().where(Movie.id == user_review.movie_id).first() is None:
+        raise HTTPException(status_code=404, detail="La película no existe")
+
     user_review = UserReview.create(
         user=user_review.user_id,
         movie=user_review.movie_id,
