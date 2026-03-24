@@ -14,5 +14,5 @@ def application(env, start_response):
     return [bytes(HTML, 'utf-8')] 
 
 
-server = make_server('localhost', 8000, application)
+server = make_server('localhost', 8001, application)
 server.serve_forever()

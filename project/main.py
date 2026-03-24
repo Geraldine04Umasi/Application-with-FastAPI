@@ -61,3 +61,10 @@ async def create_reviews(user_review: ReviewRequestModel):
 async def get_review():
     reviews = UserReview.select() #SELECT * FROM user_reviews;
     return [user_review for user_review in reviews]
+
+@app.get('/reviews/{review_id}')
+async def get_review(review_id: int):
+    user_review = UserReview.select().where(UserReview.id == review_id).first()
+    if user_review is None:
+        raise HTTPException(status_code=404, detail="Review not found")
+    return user_review
