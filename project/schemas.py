@@ -1,10 +1,11 @@
-from pydantic import BaseModel
-from pydantic import validator
-from pydantic.utils import GetterDict
+from pydantic import BaseModel, field_validator
+from pydantic import ConfigDict
 from typing import Any
 from peewee import ModelSelect
 
-class PeeweeGetterDict(GetterDict):
+class PeeweeGetterDict(dict):
+    def __init__(self, obj):
+        self._obj = obj
     def get(self, key: Any, default: Any = None):
         res = getattr(self._obj, key, default)
         if isinstance(res, ModelSelect):
@@ -15,35 +16,42 @@ class UserRequestModel(BaseModel):
     username: str
     password: str
 
-    @validator('username')
+    @field_validator('username')
+    @classmethod
     def username_validator(cls, username):
         if len(username) < 3 or len(username) > 50:
             raise ValueError('El nombre de usuario debe tener entre 3 y 50 caracteres')
         return username
 
 class ResponseModel(BaseModel):
-    class Config:
-        orm_mode = True
-        getter_dict = PeeweeGetterDict
+    model_config = ConfigDict(from_attributes=True)
 
 class UserResponseModel(ResponseModel):
     id: int
     username: str
 
-class ReviewRequestModel(BaseModel):
-    user_id: int
-    movie_id: int
-    reviews: str
+class ReviewValidator(BaseModel):
     score: int
 
-    @validator('score')
+    @field_validator('score')
+    @classmethod
     def score_validator(cls, score):
         if score < 1 or score > 5:
             raise ValueError('La puntuación debe estar entre 1 y 5')
         return score
 
+class ReviewRequestModel(ReviewValidator):
+    user_id: int
+    movie_id: int
+    reviews: str
+    score: int
+
 class ReviewResponseModel(ResponseModel):
     id: int
     movie_id: int
+    reviews: str
+    score: int
+
+class ReviewRequestPutModel(ReviewValidator):
     reviews: str
     score: int

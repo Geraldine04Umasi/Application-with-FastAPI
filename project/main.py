@@ -2,8 +2,12 @@ from fastapi import FastAPI
 from fastapi import HTTPException
 from database import database as connection
 from database import User, Movie, UserReview
-from schemas import UserRequestModel, UserResponseModel, ReviewRequestModel, ReviewResponseModel
+from schemas import UserRequestModel, UserResponseModel, ReviewRequestModel, ReviewResponseModel, ReviewRequestPutModel
 from typing import List
+from pydantic import BaseModel
+
+class MessageResponse(BaseModel):
+    message: str
 
 app = FastAPI(title="Proyecto para reseñar películas",
  version="1.0.0",
@@ -68,3 +72,25 @@ async def get_review(review_id: int):
     if user_review is None:
         raise HTTPException(status_code=404, detail="Review not found")
     return user_review
+
+@app.put('/reviews/{review_id}', response_model=ReviewResponseModel)
+async def update_review(review_id: int, review_request: ReviewRequestPutModel):
+    user_review = UserReview.select().where(UserReview.id == review_id).first()
+    if user_review is None:
+        raise HTTPException(status_code=404, detail="Review not found")
+    
+    user_review.reviews = review_request.reviews
+    user_review.score = review_request.score
+    user_review.save()
+
+    return user_review
+
+
+@app.delete('/reviews/{review_id}', response_model=MessageResponse)
+async def delete_review(review_id: int):
+    user_review = UserReview.select().where(UserReview.id == review_id).first()
+    if user_review is None:
+        raise HTTPException(status_code=404, detail="Review not found")
+    
+    user_review.delete_instance()
+    return {"message": "Review deleted successfully"}
