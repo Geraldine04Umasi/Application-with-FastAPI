@@ -62,8 +62,8 @@ async def create_reviews(user_review: ReviewRequestModel):
     return user_review
 
 @app.get('/reviews/', response_model=List[ReviewResponseModel])
-async def get_review():
-    reviews = UserReview.select() #SELECT * FROM user_reviews;
+async def get_review(page: int = 1, limit: int = 10):
+    reviews = UserReview.select().paginate(page, limit) #SELECT * FROM user_reviews;
     return [user_review for user_review in reviews]
 
 @app.get('/reviews/{review_id}')
